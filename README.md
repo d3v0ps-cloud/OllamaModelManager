@@ -14,6 +14,7 @@ A web-based management interface for Ollama endpoints, allowing you to manage an
 - Sort Models
 - Select Multiple Models
 - Delete Selected Models
+- Light & Dark Theme (defaults dark)
 
 ## Prerequisites
 
