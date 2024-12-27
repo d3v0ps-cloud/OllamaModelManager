@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ollama Model Manager</title>
     <style>
+        /* Previous CSS remains the same until endpointInput */
         :root {
             /* Light theme */
             --bg-color: #f5f5f5;
@@ -29,6 +30,7 @@
             --input-bg: white;
             --input-text: #000;
             --input-border: #ccc;
+            --select-bg: white;
         }
 
         [data-theme="dark"] {
@@ -54,8 +56,29 @@
             --input-bg: #404040;
             --input-text: #e0e0e0;
             --input-border: #555;
+            --select-bg: #404040;
         }
 
+        /* Previous CSS remains the same until endpointInput */
+
+        .endpoint-select {
+            width: 300px;
+            padding: 8px;
+            margin-right: 10px;
+            background-color: var(--select-bg);
+            color: var(--input-text);
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .endpoint-select option {
+            background-color: var(--select-bg);
+            color: var(--input-text);
+            padding: 8px;
+        }
+
+        /* Rest of the previous CSS remains the same */
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
@@ -76,16 +99,6 @@
             margin-bottom: 20px;
             padding-bottom: 20px;
             border-bottom: 1px solid var(--border-color);
-        }
-
-        #endpointInput {
-            width: 300px;
-            padding: 8px;
-            margin-right: 10px;
-            background-color: var(--input-bg);
-            color: var(--input-text);
-            border: 1px solid var(--input-border);
-            border-radius: 4px;
         }
 
         .models-list {
@@ -262,7 +275,9 @@
         
         <div class="endpoint-section">
             <h2>Ollama Endpoint</h2>
-            <input type="text" id="endpointInput" placeholder="Enter Ollama endpoint URL" value="http://localhost:11434">
+            <select id="endpointInput" class="endpoint-select">
+                <option value="">Loading endpoints...</option>
+            </select>
             <button onclick="setEndpoint()">Connect</button>
             <div id="endpointStatus"></div>
         </div>
@@ -306,6 +321,33 @@
         const savedTheme = localStorage.getItem('theme') || 'dark';
         setTheme(savedTheme);
 
+        // Load endpoints from server
+        async function loadEndpoints() {
+            try {
+                const response = await fetch('/api/endpoints');
+                const endpoints = await response.json();
+                const select = document.getElementById('endpointInput');
+                
+                // Get last used endpoint from localStorage or use first endpoint
+                const lastEndpoint = localStorage.getItem('lastEndpoint') || endpoints[0];
+                
+                select.innerHTML = endpoints.map(endpoint => 
+                    `<option value="${endpoint}" ${endpoint === lastEndpoint ? 'selected' : ''}>
+                        ${endpoint}
+                    </option>`
+                ).join('');
+
+                // Connect to the selected endpoint
+                if (lastEndpoint) {
+                    setEndpoint();
+                }
+            } catch (error) {
+                console.error('Failed to load endpoints:', error);
+                const select = document.getElementById('endpointInput');
+                select.innerHTML = '<option value="">Failed to load endpoints</option>';
+            }
+        }
+
         function formatSize(bytes) {
             if (!bytes) return '';
             const units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -333,6 +375,7 @@
                 if (data.success) {
                     statusDiv.className = 'success';
                     statusDiv.textContent = 'Connected successfully!';
+                    localStorage.setItem('lastEndpoint', endpoint);
                     refreshModels();
                 } else {
                     throw new Error(data.message);
@@ -470,7 +513,7 @@
 
         // Initial load
         document.addEventListener('DOMContentLoaded', () => {
-            setEndpoint();
+            loadEndpoints();
         });
     </script>
 </body>

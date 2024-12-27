@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
@@ -10,6 +11,17 @@ app.use(express.static('public'));
 
 // Store the Ollama endpoint
 let ollamaEndpoint = 'http://localhost:11434';
+
+// Get endpoints from environment variable
+const getEndpoints = () => {
+    const endpoints = process.env.OLLAMA_ENDPOINTS || 'http://localhost:11434';
+    return endpoints.split(',').map(endpoint => endpoint.trim());
+};
+
+// Endpoint to get available Ollama endpoints
+app.get('/api/endpoints', (req, res) => {
+    res.json(getEndpoints());
+});
 
 // Endpoint to set Ollama API URL
 app.post('/api/set-endpoint', async (req, res) => {
