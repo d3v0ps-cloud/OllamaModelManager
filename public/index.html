@@ -44,6 +44,11 @@
             flex-grow: 1;
             margin-left: 10px;
         }
+        .model-size {
+            color: #666;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
         button {
             padding: 8px 16px;
             background-color: #007bff;
@@ -102,6 +107,18 @@
     <script>
         let selectedModels = new Set();
 
+        function formatSize(bytes) {
+            if (!bytes) return '';
+            const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            let size = bytes;
+            let unitIndex = 0;
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+            return `${size.toFixed(2)} ${units[unitIndex]}`;
+        }
+
         async function setEndpoint() {
             const endpoint = document.getElementById('endpointInput').value.trim();
             const statusDiv = document.getElementById('endpointStatus');
@@ -141,6 +158,7 @@
                                id="${model.name}" 
                                onchange="toggleModel('${model.name}')">
                         <span class="model-name">${model.name}</span>
+                        <span class="model-size">${formatSize(model.size)}</span>
                     </div>
                 `).join('');
             } catch (error) {
