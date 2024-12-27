@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ollama Model Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .endpoint-section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        #endpointInput {
+            width: 300px;
+            padding: 8px;
+            margin-right: 10px;
+        }
+        .models-list {
+            margin-top: 20px;
+        }
+        .model-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .model-item:hover {
+            background-color: #f8f8f8;
+        }
+        .model-name {
+            flex-grow: 1;
+            margin-left: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        #status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ollama Model Manager</h1>
+        
+        <div class="endpoint-section">
+            <h2>Ollama Endpoint</h2>
+            <input type="text" id="endpointInput" placeholder="Enter Ollama endpoint URL" value="http://localhost:11434">
+            <button onclick="setEndpoint()">Connect</button>
+            <div id="endpointStatus"></div>
+        </div>
+
+        <div class="models-section">
+            <h2>Available Models</h2>
+            <button onclick="refreshModels()">Refresh Models</button>
+            <button onclick="deleteSelectedModels()" class="delete-btn">Delete Selected</button>
+            <div class="models-list" id="modelsList"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedModels = new Set();
+
+        async function setEndpoint() {
+            const endpoint = document.getElementById('endpointInput').value.trim();
+            const statusDiv = document.getElementById('endpointStatus');
+            
+            try {
+                const response = await fetch('/api/set-endpoint', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ endpoint })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusDiv.className = 'success';
+                    statusDiv.textContent = 'Connected successfully!';
+                    refreshModels();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                statusDiv.className = 'error';
+                statusDiv.textContent = `Connection failed: ${error.message}`;
+            }
+        }
+
+        async function refreshModels() {
+            const modelsList = document.getElementById('modelsList');
+            selectedModels.clear();
+            
+            try {
+                const response = await fetch('/api/models');
+                const models = await response.json();
+                
+                modelsList.innerHTML = models.map(model => `
+                    <div class="model-item">
+                        <input type="checkbox" 
+                               id="${model.name}" 
+                               onchange="toggleModel('${model.name}')">
+                        <span class="model-name">${model.name}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                modelsList.innerHTML = `<div class="error">Failed to fetch models: ${error.message}</div>`;
+            }
+        }
+
+        function toggleModel(modelName) {
+            if (selectedModels.has(modelName)) {
+                selectedModels.delete(modelName);
+            } else {
+                selectedModels.add(modelName);
+            }
+        }
+
+        async function deleteSelectedModels() {
+            if (selectedModels.size === 0) return;
+            
+            if (!confirm(`Are you sure you want to delete ${selectedModels.size} model(s)?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/models', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ models: Array.from(selectedModels) })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('Models deleted successfully');
+                    refreshModels();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('Failed to connect to server');
+            }
+        }
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            setEndpoint();
+        });
+    </script>
+</body>
+</html>
