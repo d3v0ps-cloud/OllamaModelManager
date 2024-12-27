@@ -26,6 +26,9 @@
             <h2>Available Models</h2>
             <button onclick="refreshModels()">Refresh Models</button>
             <button onclick="deleteSelectedModels()" class="delete-btn">Delete Selected</button>
+            <div class="filter-container">
+                <input type="text" id="modelFilter" placeholder="Filter models..." onkeyup="filterModels()" class="filter-input">
+            </div>
             <div class="models-list" id="modelsList">
                 <div class="models-header">
                     <div class="checkbox-col"></div>
@@ -167,6 +170,14 @@
             valueA = (valueA || '').toString().toLowerCase();
             valueB = (valueB || '').toString().toLowerCase();
             return valueA.localeCompare(valueB);
+        }
+
+        function filterModels() {
+            const filterValue = document.getElementById('modelFilter').value.toLowerCase();
+            const filteredModels = currentModels.filter(model => 
+                model.name.toLowerCase().includes(filterValue)
+            );
+            displayModels(filteredModels);
         }
 
         function displayModels(models) {
