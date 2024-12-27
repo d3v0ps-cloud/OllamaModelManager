@@ -49,6 +49,19 @@
             margin-right: 10px;
             font-size: 0.9em;
         }
+        .model-details {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+        .detail-item {
+            background-color: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: #555;
+        }
         button {
             padding: 8px 16px;
             background-color: #007bff;
@@ -159,6 +172,14 @@
                                onchange="toggleModel('${model.name}')">
                         <span class="model-name">${model.name}</span>
                         <span class="model-size">${formatSize(model.size)}</span>
+                        ${model.details ? `
+                            <div class="model-details">
+                                ${model.details.parameter_size ? `<span class="detail-item">${model.details.parameter_size}</span>` : ''}
+                                ${model.details.family ? `<span class="detail-item">${model.details.family}</span>` : ''}
+                                ${model.details.format ? `<span class="detail-item">${model.details.format}</span>` : ''}
+                                ${model.details.quantization_level ? `<span class="detail-item">${model.details.quantization_level}</span>` : ''}
+                            </div>
+                        ` : ''}
                     </div>
                 `).join('');
             } catch (error) {

@@ -32,8 +32,32 @@ app.post('/api/set-endpoint', async (req, res) => {
 app.get('/api/models', async (req, res) => {
     try {
         const response = await axios.get(`${ollamaEndpoint}/api/tags`);
+        
+        // Get details for each model
+        const modelsWithDetails = await Promise.all(response.data.models.map(async (model) => {
+            try {
+                const detailsResponse = await axios.post(`${ollamaEndpoint}/api/show`, {
+                    name: model.name
+                });
+                return {
+                    ...model,
+                    details: {
+                        parent_model: detailsResponse.data.details?.parent_model || "",
+                        format: detailsResponse.data.details?.format || "",
+                        family: detailsResponse.data.details?.family || "",
+                        families: detailsResponse.data.details?.families || [],
+                        parameter_size: detailsResponse.data.details?.parameter_size || "",
+                        quantization_level: detailsResponse.data.details?.quantization_level || ""
+                    }
+                };
+            } catch (error) {
+                // If we can't get details, return the model without them
+                return model;
+            }
+        }));
+
         // Sort models alphabetically
-        const sortedModels = response.data.models.sort((a, b) => 
+        const sortedModels = modelsWithDetails.sort((a, b) => 
             a.name.localeCompare(b.name)
         );
         res.json(sortedModels);
