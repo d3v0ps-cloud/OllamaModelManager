@@ -28,7 +28,7 @@ A web-based management interface for Ollama endpoints, allowing you to manage an
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/OllamaModelManager.git
+git clone https://github.com/d3v0ps-cloud/OllamaModelManager.git
 cd OllamaModelManager
 ```
 
@@ -58,13 +58,35 @@ The application will be available at `http://localhost:3000`
 
 ### Using Docker
 
+#### Option 1 - Build your own image
+
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/OllamaModelManager.git
+git clone https://github.com/d3v0ps-cloud/OllamaModelManager.git
 cd OllamaModelManager
 ```
 
 2. Configure your Ollama endpoints in `docker-compose.yml`:
+```yaml
+environment:
+  - OLLAMA_ENDPOINTS=http://your-ollama-ip:11434,https://ollama1.remote.net
+```
+
+3. Build and start the container:
+```bash
+docker compose up -d
+```
+
+The application will be available at `http://localhost:3000`
+
+#### Option 2 - Use the prebuilt image
+
+1. Copy down the Pre-Built Compose file:
+```bash
+docker-compose-prebuilt.yml
+```
+
+2. Configure your Ollama endpoints in `docker-compose-prebuilt.yml`:
 ```yaml
 environment:
   - OLLAMA_ENDPOINTS=http://your-ollama-ip:11434,https://ollama1.remote.net

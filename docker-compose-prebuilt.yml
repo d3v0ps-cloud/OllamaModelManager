@@ -1,0 +1,8 @@
+services:
+  ollamamodelmanager:
+    image: ghcr.io/d3v0ps-cloud/ollamamodelmanager:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - OLLAMA_ENDPOINTS=http://192.168.1.10:11434,https://ollama1.remote.net,https://ollama2.remote.net
+    restart: unless-stopped
