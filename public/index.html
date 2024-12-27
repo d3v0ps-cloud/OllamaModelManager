@@ -31,6 +31,34 @@
         .models-list {
             margin-top: 20px;
         }
+        .models-header {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 2px solid #ddd;
+            font-weight: bold;
+            background-color: #f8f8f8;
+        }
+        .models-header > div {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            user-select: none;
+        }
+        .models-header > div:hover {
+            color: #007bff;
+        }
+        .sort-indicator::after {
+            content: '↕';
+            margin-left: 4px;
+            font-size: 0.8em;
+        }
+        .sort-asc::after {
+            content: '↑';
+        }
+        .sort-desc::after {
+            content: '↓';
+        }
         .model-item {
             display: flex;
             align-items: center;
@@ -40,9 +68,27 @@
         .model-item:hover {
             background-color: #f8f8f8;
         }
-        .model-name {
-            flex-grow: 1;
-            margin-left: 10px;
+        .checkbox-col {
+            width: 24px;
+        }
+        .name-col {
+            flex: 2;
+            min-width: 150px;
+        }
+        .size-col {
+            width: 100px;
+        }
+        .param-col {
+            width: 80px;
+        }
+        .family-col {
+            width: 100px;
+        }
+        .format-col {
+            width: 80px;
+        }
+        .quant-col {
+            width: 100px;
         }
         .model-size {
             color: #666;
@@ -113,7 +159,18 @@
             <h2>Available Models</h2>
             <button onclick="refreshModels()">Refresh Models</button>
             <button onclick="deleteSelectedModels()" class="delete-btn">Delete Selected</button>
-            <div class="models-list" id="modelsList"></div>
+            <div class="models-list" id="modelsList">
+                <div class="models-header">
+                    <div class="checkbox-col"></div>
+                    <div class="name-col sort-indicator" onclick="sortModels('name')">Name</div>
+                    <div class="size-col sort-indicator" onclick="sortModels('size')">Size</div>
+                    <div class="param-col sort-indicator" onclick="sortModels('parameter_size')">Params</div>
+                    <div class="family-col sort-indicator" onclick="sortModels('family')">Family</div>
+                    <div class="format-col sort-indicator" onclick="sortModels('format')">Format</div>
+                    <div class="quant-col sort-indicator" onclick="sortModels('quantization_level')">Q-Level</div>
+                </div>
+                <div id="modelsListContent"></div>
+            </div>
         </div>
     </div>
 
@@ -157,6 +214,82 @@
             }
         }
 
+        let currentModels = [];
+        let currentSort = { field: 'name', direction: 'asc' };
+
+        function sortModels(field) {
+            const headers = document.querySelectorAll('.models-header > div');
+            headers.forEach(header => {
+                header.classList.remove('sort-asc', 'sort-desc');
+            });
+
+            if (currentSort.field === field) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.field = field;
+                currentSort.direction = 'asc';
+            }
+
+            const header = document.querySelector(`.${field}-col`);
+            if (header) {
+                header.classList.add(`sort-${currentSort.direction}`);
+            }
+
+            displayModels(currentModels);
+        }
+
+        function compareValues(a, b, field) {
+            let valueA = a;
+            let valueB = b;
+
+            if (field === 'size') {
+                return a - b;
+            }
+            
+            if (field === 'parameter_size') {
+                valueA = parseFloat(a?.replace('B', '')) || 0;
+                valueB = parseFloat(b?.replace('B', '')) || 0;
+                return valueA - valueB;
+            }
+
+            valueA = (valueA || '').toString().toLowerCase();
+            valueB = (valueB || '').toString().toLowerCase();
+            return valueA.localeCompare(valueB);
+        }
+
+        function displayModels(models) {
+            const modelsListContent = document.getElementById('modelsListContent');
+            
+            // Sort models
+            const sortedModels = [...models].sort((a, b) => {
+                let valueA = currentSort.field === 'name' ? a[currentSort.field] : 
+                            currentSort.field === 'size' ? a[currentSort.field] :
+                            a.details?.[currentSort.field];
+                let valueB = currentSort.field === 'name' ? b[currentSort.field] :
+                            currentSort.field === 'size' ? b[currentSort.field] :
+                            b.details?.[currentSort.field];
+
+                const comparison = compareValues(valueA, valueB, currentSort.field);
+                return currentSort.direction === 'asc' ? comparison : -comparison;
+            });
+
+            modelsListContent.innerHTML = sortedModels.map(model => `
+                <div class="model-item">
+                    <div class="checkbox-col">
+                        <input type="checkbox" 
+                               id="${model.name}" 
+                               onchange="toggleModel('${model.name}')">
+                    </div>
+                    <div class="name-col">${model.name}</div>
+                    <div class="size-col">${formatSize(model.size)}</div>
+                    <div class="param-col">${model.details?.parameter_size || ''}</div>
+                    <div class="family-col">${model.details?.family || ''}</div>
+                    <div class="format-col">${model.details?.format || ''}</div>
+                    <div class="quant-col">${model.details?.quantization_level || ''}</div>
+                </div>
+            `).join('');
+        }
+
         async function refreshModels() {
             const modelsList = document.getElementById('modelsList');
             selectedModels.clear();
@@ -165,23 +298,8 @@
                 const response = await fetch('/api/models');
                 const models = await response.json();
                 
-                modelsList.innerHTML = models.map(model => `
-                    <div class="model-item">
-                        <input type="checkbox" 
-                               id="${model.name}" 
-                               onchange="toggleModel('${model.name}')">
-                        <span class="model-name">${model.name}</span>
-                        <span class="model-size">${formatSize(model.size)}</span>
-                        ${model.details ? `
-                            <div class="model-details">
-                                ${model.details.parameter_size ? `<span class="detail-item">${model.details.parameter_size}</span>` : ''}
-                                ${model.details.family ? `<span class="detail-item">${model.details.family}</span>` : ''}
-                                ${model.details.format ? `<span class="detail-item">${model.details.format}</span>` : ''}
-                                ${model.details.quantization_level ? `<span class="detail-item">${model.details.quantization_level}</span>` : ''}
-                            </div>
-                        ` : ''}
-                    </div>
-                `).join('');
+                currentModels = models;
+                displayModels(models);
             } catch (error) {
                 modelsList.innerHTML = `<div class="error">Failed to fetch models: ${error.message}</div>`;
             }
