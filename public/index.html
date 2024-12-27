@@ -1,150 +1,262 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ollama Model Manager</title>
     <style>
+        :root {
+            /* Light theme */
+            --bg-color: #f5f5f5;
+            --container-bg: white;
+            --text-color: #000;
+            --border-color: #eee;
+            --hover-bg: #f8f8f8;
+            --header-bg: #f8f8f8;
+            --pill-bg: #f0f0f0;
+            --pill-text: #555;
+            --shadow-color: rgba(0,0,0,0.1);
+            --success-bg: #d4edda;
+            --success-text: #155724;
+            --error-bg: #f8d7da;
+            --error-text: #721c24;
+            --button-bg: #007bff;
+            --button-hover: #0056b3;
+            --button-text: white;
+            --delete-button-bg: #dc3545;
+            --delete-button-hover: #c82333;
+            --checkbox-bg: white;
+            --input-bg: white;
+            --input-text: #000;
+            --input-border: #ccc;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --container-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --border-color: #404040;
+            --hover-bg: #363636;
+            --header-bg: #363636;
+            --pill-bg: #404040;
+            --pill-text: #e0e0e0;
+            --shadow-color: rgba(0,0,0,0.3);
+            --success-bg: #1e4620;
+            --success-text: #75b798;
+            --error-bg: #4c1d1b;
+            --error-text: #ea868f;
+            --button-bg: #0d6efd;
+            --button-hover: #0b5ed7;
+            --button-text: white;
+            --delete-button-bg: #bb2d3b;
+            --delete-button-hover: #a52834;
+            --checkbox-bg: #404040;
+            --input-bg: #404040;
+            --input-text: #e0e0e0;
+            --input-border: #555;
+        }
+
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: var(--bg-color);
+            color: var(--text-color);
         }
+
         .container {
-            background-color: white;
+            background-color: var(--container-bg);
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px var(--shadow-color);
         }
+
         .endpoint-section {
             margin-bottom: 20px;
             padding-bottom: 20px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
         }
+
         #endpointInput {
             width: 300px;
             padding: 8px;
             margin-right: 10px;
+            background-color: var(--input-bg);
+            color: var(--input-text);
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
         }
+
         .models-list {
             margin-top: 20px;
         }
+
         .models-header {
             display: flex;
             align-items: center;
             padding: 8px;
-            border-bottom: 2px solid #ddd;
+            border-bottom: 2px solid var(--border-color);
             font-weight: bold;
-            background-color: #f8f8f8;
+            background-color: var(--header-bg);
         }
+
         .models-header > div {
             cursor: pointer;
             display: flex;
             align-items: center;
             user-select: none;
         }
+
         .models-header > div:hover {
-            color: #007bff;
+            color: var(--button-bg);
         }
+
         .sort-indicator::after {
             content: '↕';
             margin-left: 4px;
             font-size: 0.8em;
         }
+
         .sort-asc::after {
             content: '↑';
         }
+
         .sort-desc::after {
             content: '↓';
         }
+
         .model-item {
             display: flex;
             align-items: center;
             padding: 8px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
         }
+
         .model-item:hover {
-            background-color: #f8f8f8;
+            background-color: var(--hover-bg);
         }
+
         .checkbox-col {
             width: 24px;
         }
+
+        .checkbox-col input[type="checkbox"] {
+            accent-color: var(--button-bg);
+        }
+
         .name-col {
             flex: 2;
             min-width: 150px;
         }
+
         .size-col {
             width: 100px;
         }
+
         .param-col {
             width: 80px;
         }
+
         .family-col {
             width: 100px;
         }
+
         .format-col {
             width: 80px;
         }
+
         .quant-col {
             width: 100px;
         }
+
         .model-size {
-            color: #666;
+            color: var(--text-color);
             margin-right: 10px;
             font-size: 0.9em;
         }
+
         .model-details {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
             margin-left: auto;
         }
+
         .detail-item {
-            background-color: #f0f0f0;
+            background-color: var(--pill-bg);
             padding: 2px 8px;
             border-radius: 4px;
             font-size: 0.85em;
-            color: #555;
+            color: var(--pill-text);
         }
+
         button {
             padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
+            background-color: var(--button-bg);
+            color: var(--button-text);
             border: none;
             border-radius: 4px;
             cursor: pointer;
         }
+
         button:hover {
-            background-color: #0056b3;
+            background-color: var(--button-hover);
         }
+
         button:disabled {
-            background-color: #ccc;
+            background-color: var(--border-color);
             cursor: not-allowed;
         }
+
         .delete-btn {
-            background-color: #dc3545;
+            background-color: var(--delete-button-bg);
         }
+
         .delete-btn:hover {
-            background-color: #c82333;
+            background-color: var(--delete-button-hover);
         }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            cursor: pointer;
+            border: none;
+        }
+
         #status {
             margin-top: 10px;
             padding: 10px;
             border-radius: 4px;
         }
+
         .success {
-            background-color: #d4edda;
-            color: #155724;
+            background-color: var(--success-bg);
+            color: var(--success-text);
         }
+
         .error {
-            background-color: #f8d7da;
-            color: #721c24;
+            background-color: var(--error-bg);
+            color: var(--error-text);
         }
     </style>
 </head>
 <body>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <span id="themeIcon">🌞</span>
+    </button>
+
     <div class="container">
         <h1>Ollama Model Manager</h1>
         
@@ -176,6 +288,23 @@
 
     <script>
         let selectedModels = new Set();
+
+        // Theme handling
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            document.getElementById('themeIcon').textContent = theme === 'dark' ? '🌞' : '🌙';
+            localStorage.setItem('theme', theme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        }
+
+        // Initialize theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        setTheme(savedTheme);
 
         function formatSize(bytes) {
             if (!bytes) return '';
