@@ -2,11 +2,18 @@
 
 A web-based management interface for Ollama endpoints, allowing you to manage and interact with multiple Ollama instances from a single dashboard.
 
+<img src="demo.png" width="50%" alt="Demo Screenshot">
+
+
 ## Features
 
 - Connect to multiple Ollama endpoints simultaneously
 - Web-based interface for model management
 - Support for both local and remote Ollama instances
+- Filter Models
+- Sort Models
+- Select Multiple Models
+- Delete Selected Models
 
 ## Prerequisites
 
