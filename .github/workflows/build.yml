@@ -5,9 +5,15 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'README.md'
+      - 'demo.png'
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - 'README.md'
+      - 'demo.png'
 
 env:
   REGISTRY: ghcr.io
