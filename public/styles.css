@@ -237,6 +237,11 @@ h2 {
 .format-col { width: 80px; }
 .quant-col { width: 100px; }
 
+.actions-col {
+    flex: 0.5;
+    text-align: center;
+}
+
 button {
     padding: 10px 20px;
     background-color: var(--button-bg);
@@ -272,6 +277,32 @@ button:disabled {
 
 .delete-btn:hover {
     background-color: var(--delete-button-hover);
+}
+
+.update-btn {
+    padding: 4px 8px;
+    background-color: var(--accent-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.update-btn:hover {
+    opacity: 0.8;
+}
+
+.update-status {
+    font-size: 0.8em;
+    color: var(--text-color);
+    margin-top: 4px;
+}
+
+.bulk-actions {
+    margin-bottom: 16px;
+    padding: 16px;
+    background-color: var(--container-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
 }
 
 .filter-container {
