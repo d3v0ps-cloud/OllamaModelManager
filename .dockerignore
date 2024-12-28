@@ -1,0 +1,15 @@
+.git
+.gitignore
+.gitattributes
+.github
+README.md
+demo.png
+node_modules
+npm-debug.log
+*.log
+.env
+.env.*
+.DS_Store
+docker-compose.yml
+docker-compose-prebuilt.yml
+Dockerfile
