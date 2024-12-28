@@ -16,10 +16,18 @@
         
         <div class="endpoint-section">
             <h2>Ollama Endpoints</h2>
-            <select id="endpointInput" class="endpoint-select" onchange="setEndpoint()">
-                <option value="">Loading endpoints...</option>
-            </select>
-            <div id="endpointStatus"></div>
+            <div class="endpoint-container">
+                <div class="endpoint-select-wrapper">
+                    <select id="endpointInput" class="endpoint-select" onchange="setEndpoint()">
+                        <option value="">Loading endpoints...</option>
+                    </select>
+                    <div id="endpointStatus"></div>
+                </div>
+                <div class="running-models-stats">
+                    <h3>Running Models</h3>
+                    <div id="runningModelsContent"></div>
+                </div>
+            </div>
         </div>
 
         <div class="models-section">
@@ -404,10 +412,83 @@
             }
         }
 
+        async function fetchRunningModels() {
+            const runningModelsContent = document.getElementById('runningModelsContent');
+            try {
+                const response = await fetch('/api/ps');
+                const data = await response.json();
+                
+                if (!data.models || data.models.length === 0) {
+                    runningModelsContent.innerHTML = '<div class="running-model-item">No models currently running</div>';
+                    return;
+                }
+
+                runningModelsContent.innerHTML = data.models.map(model => `
+                    <div class="running-model-item">
+                        <div class="model-stat">
+                            <span class="stat-label">Name:</span>
+                            <span class="stat-value">${model.name}</span>
+                        </div>
+                        <div class="model-stat">
+                            <span class="stat-label">Memory:</span>
+                            <span class="stat-value">${formatSize(model.size_vram)}</span>
+                        </div>
+                        <div class="model-stat">
+                            <span class="stat-label">Parameters:</span>
+                            <span class="stat-value">${model.details?.parameter_size || 'N/A'}</span>
+                        </div>
+                        <div class="model-stat">
+                            <span class="stat-label">Format:</span>
+                            <span class="stat-value">${model.details?.format || 'N/A'}</span>
+                        </div>
+                        <div class="model-stat">
+                            <span class="stat-label">Quantization:</span>
+                            <span class="stat-value">${model.details?.quantization_level || 'N/A'}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to fetch running models:', error);
+                runningModelsContent.innerHTML = '<div class="running-model-item error">Failed to fetch running models</div>';
+            }
+        }
+
+        // Update running models when endpoint changes
+        async function setEndpoint() {
+            const endpoint = document.getElementById('endpointInput').value.trim();
+            const statusDiv = document.getElementById('endpointStatus');
+            
+            try {
+                const response = await fetch('/api/set-endpoint', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ endpoint })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusDiv.className = 'success';
+                    statusDiv.textContent = 'Connected successfully!';
+                    localStorage.setItem('lastEndpoint', endpoint);
+                    refreshModels();
+                    fetchRunningModels(); // Add this line to fetch running models
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                statusDiv.className = 'error';
+                statusDiv.textContent = `Connection failed: ${error.message}`;
+            }
+        }
+
         // Initial load
         document.addEventListener('DOMContentLoaded', () => {
             loadEndpoints();
+            fetchRunningModels();
         });
+
+        // Refresh running models periodically
+        setInterval(fetchRunningModels, 5000);
     </script>
 </body>
 </html>
