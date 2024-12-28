@@ -113,6 +113,83 @@ app.delete('/api/models', async (req, res) => {
     }
 });
 
+// Endpoint to update a model
+app.post('/api/update-model', async (req, res) => {
+    const { modelName } = req.body;
+    
+    if (!modelName) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Model name is required' 
+        });
+    }
+
+    // Set headers for streaming response
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Transfer-Encoding', 'chunked');
+
+    let hasEnded = false;
+    const endResponse = (error) => {
+        if (!hasEnded) {
+            hasEnded = true;
+            if (error) {
+                res.write(JSON.stringify({
+                    status: 'error',
+                    error: error.message
+                }) + '\n');
+            }
+            res.end();
+        }
+    };
+
+    try {
+        const response = await axios({
+            method: 'post',
+            url: `${ollamaEndpoint}/api/pull`,
+            data: { model: modelName },
+            responseType: 'stream'
+        });
+
+        response.data.on('data', (chunk) => {
+            try {
+                const lines = chunk.toString().split('\n');
+                lines.forEach(line => {
+                    if (line.trim()) {
+                        // Validate JSON before sending
+                        try {
+                            JSON.parse(line);
+                            res.write(line + '\n');
+                        } catch (e) {
+                            console.error('Invalid JSON in response:', line);
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error processing chunk:', error);
+                endResponse(error);
+            }
+        });
+
+        response.data.on('end', () => {
+            endResponse();
+        });
+
+        response.data.on('error', (error) => {
+            console.error('Stream error:', error);
+            endResponse(error);
+        });
+
+        // Handle client disconnect
+        req.on('close', () => {
+            endResponse();
+        });
+
+    } catch (error) {
+        console.error('Failed to start update:', error);
+        endResponse(error);
+    }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
