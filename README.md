@@ -12,9 +12,11 @@ A web-based management interface for Ollama endpoints, allowing you to manage an
 - Support for both local and remote Ollama instances
 - Filter Models
 - Sort Models
-- Select Multiple Models
+- Select Multiple Models or All Models
 - Delete Selected Models
 - Light & Dark Theme (defaults dark)
+- Update Models
+- Running Models Stats
 
 ## Prerequisites
 
