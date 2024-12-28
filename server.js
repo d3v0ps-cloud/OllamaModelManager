@@ -41,6 +41,20 @@ app.post('/api/set-endpoint', async (req, res) => {
 });
 
 // Get models from Ollama
+// Get running models from Ollama
+app.get('/api/ps', async (req, res) => {
+    try {
+        const response = await axios.get(`${ollamaEndpoint}/api/ps`);
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to fetch running models',
+            error: error.message 
+        });
+    }
+});
+
 app.get('/api/models', async (req, res) => {
     try {
         const response = await axios.get(`${ollamaEndpoint}/api/tags`);
