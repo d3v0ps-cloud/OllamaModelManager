@@ -1,9 +1,7 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
-const path = require('path');
-
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import axios from 'axios';
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -68,15 +66,15 @@ app.get('/api/models', async (req, res) => {
                 return {
                     ...model,
                     details: {
-                        parent_model: detailsResponse.data.details?.parent_model || "",
-                        format: detailsResponse.data.details?.format || "",
-                        family: detailsResponse.data.details?.family || "",
+                        parent_model: detailsResponse.data.details?.parent_model || '',
+                        format: detailsResponse.data.details?.format || '',
+                        family: detailsResponse.data.details?.family || '',
                         families: detailsResponse.data.details?.families || [],
-                        parameter_size: detailsResponse.data.details?.parameter_size || "",
-                        quantization_level: detailsResponse.data.details?.quantization_level || ""
+                        parameter_size: detailsResponse.data.details?.parameter_size || '',
+                        quantization_level: detailsResponse.data.details?.quantization_level || ''
                     }
                 };
-            } catch (error) {
+            } catch {
                 // If we can't get details, return the model without them
                 return model;
             }
@@ -173,7 +171,7 @@ app.post('/api/update-model', async (req, res) => {
                         try {
                             JSON.parse(line);
                             res.write(line + '\n');
-                        } catch (e) {
+                        } catch {
                             console.error('Invalid JSON in response:', line);
                         }
                     }
