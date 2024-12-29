@@ -31,6 +31,12 @@
         </div>
 
         <div class="models-section">
+            <div class="model-pull-container" style="margin-bottom: 24px;">
+                <input type="text" id="modelPullInput" placeholder="Enter model name to pull..." class="filter-input" style="width: auto; margin-right: 12px; display: inline-block;">
+                <button onclick="pullModel()" class="pull-btn">Pull Model</button>
+                <div id="pullStatus" style="margin-top: 12px;"></div>
+                <div id="pullProgressText" class="progress-text" style="display: none;"></div>
+            </div>
             <h2>Available Models</h2>
             <button onclick="refreshModels()">Refresh Models</button>
             <button onclick="updateSelectedModels()" id="updateSelectedBtn" disabled>Update Selected</button>
@@ -58,23 +64,21 @@
 
     <script>
         let selectedModels = new Set();
+        let currentModels = [];
+        let currentSort = { field: 'name', direction: 'asc' };
 
         // Theme handling
-        function setTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            document.getElementById('themeIcon').textContent = theme === 'dark' ? '🌞' : '🌙';
-            localStorage.setItem('theme', theme);
-        }
-
-        function toggleTheme() {
+        const toggleTheme = () => {
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            setTheme(newTheme);
-        }
+            document.documentElement.setAttribute('data-theme', newTheme);
+            document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '🌞' : '🌙';
+            localStorage.setItem('theme', newTheme);
+        };
 
         // Initialize theme
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        setTheme(savedTheme);
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+        document.getElementById('themeIcon').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '🌞' : '🌙';
 
         // Load endpoints from server
         async function loadEndpoints() {
@@ -132,6 +136,7 @@
                     statusDiv.textContent = 'Connected successfully!';
                     localStorage.setItem('lastEndpoint', endpoint);
                     refreshModels();
+                    fetchRunningModels();
                 } else {
                     throw new Error(data.message);
                 }
@@ -140,9 +145,6 @@
                 statusDiv.textContent = `Connection failed: ${error.message}`;
             }
         }
-
-        let currentModels = [];
-        let currentSort = { field: 'name', direction: 'asc' };
 
         function sortModels(field) {
             const headers = document.querySelectorAll('.models-header > div');
@@ -222,7 +224,10 @@
                     <div class="format-col">${model.details?.format || ''}</div>
                     <div class="quant-col">${model.details?.quantization_level || ''}</div>
                     <div class="actions-col">
-                        <button class="update-btn" onclick="updateModel('${model.name}')">Update</button>
+                        <div class="action-buttons">
+                            <button class="update-btn" onclick="updateModel('${model.name}')">Update</button>
+                            <button class="delete-btn" onclick="deleteModel('${model.name}')">Delete</button>
+                        </div>
                         <div id="status-${model.name}" class="update-status"></div>
                     </div>
                 </div>
@@ -311,6 +316,29 @@
             selectedModels.clear();
             updateBulkActionButtons();
             refreshModels();
+        }
+
+        async function deleteModel(modelName) {
+            if (!confirm(`Are you sure you want to delete ${modelName}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/models', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ models: [modelName] })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    refreshModels();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('Failed to connect to server');
+            }
         }
 
         async function deleteSelectedModels() {
@@ -453,31 +481,90 @@
             }
         }
 
-        // Update running models when endpoint changes
-        async function setEndpoint() {
-            const endpoint = document.getElementById('endpointInput').value.trim();
-            const statusDiv = document.getElementById('endpointStatus');
+        async function pullModel() {
+            const modelName = document.getElementById('modelPullInput').value.trim();
+            if (!modelName) {
+                alert('Please enter a model name');
+                return;
+            }
+
+            const statusElement = document.getElementById('pullStatus');
+            const progressText = document.getElementById('pullProgressText');
             
+            statusElement.className = '';
+            statusElement.textContent = 'Starting pull...';
+            progressText.style.display = 'none';
+
             try {
-                const response = await fetch('/api/set-endpoint', {
+                const response = await fetch('/api/pull', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ endpoint })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ model: modelName })
                 });
-                const data = await response.json();
-                
-                if (data.success) {
-                    statusDiv.className = 'success';
-                    statusDiv.textContent = 'Connected successfully!';
-                    localStorage.setItem('lastEndpoint', endpoint);
-                    refreshModels();
-                    fetchRunningModels(); // Add this line to fetch running models
-                } else {
-                    throw new Error(data.message);
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Failed to start pull');
                 }
+
+                const reader = response.body.getReader();
+                let lastStatus = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const text = new TextDecoder().decode(value);
+                    const lines = text.split('\n');
+
+                    for (const line of lines) {
+                        if (line.trim()) {
+                            try {
+                                const update = JSON.parse(line);
+
+                                if (update.status === 'error') {
+                                    throw new Error(update.error || 'Pull failed');
+                                }
+
+                                if (update.status === 'downloading') {
+                                    progressText.style.display = 'block';
+                                    progressText.textContent = `Downloading: ${formatSize(update.completed)} / ${formatSize(update.total)}`;
+                                    statusElement.textContent = update.status;
+                                    statusElement.className = 'success';
+                                } else if (update.status !== lastStatus) {
+                                    statusElement.textContent = update.status;
+                                    statusElement.className = 'success';
+                                    lastStatus = update.status;
+                                }
+                            } catch (e) {
+                                if (e.message === 'Pull failed') {
+                                    throw e;
+                                }
+                                console.error('Error parsing update:', e);
+                            }
+                        }
+                    }
+                }
+
+                progressText.style.display = 'none';
+                statusElement.textContent = 'Pull complete';
+                statusElement.className = 'success';
+                setTimeout(() => {
+                    statusElement.textContent = '';
+                    document.getElementById('modelPullInput').value = '';
+                    refreshModels();
+                }, 2000);
+
             } catch (error) {
-                statusDiv.className = 'error';
-                statusDiv.textContent = `Connection failed: ${error.message}`;
+                console.error('Pull error:', error);
+                progressText.style.display = 'none';
+                statusElement.textContent = `Error: ${error.message}`;
+                statusElement.className = 'error';
+                setTimeout(() => {
+                    statusElement.textContent = '';
+                }, 5000);
             }
         }
 

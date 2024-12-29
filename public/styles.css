@@ -296,8 +296,28 @@ h2 {
 .quant-col { width: 100px; }
 
 .actions-col {
-    flex: 0.5;
+    flex: 0.8;
     text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.action-buttons button {
+    padding: 6px 12px;
+    margin: 0;
+    font-size: 14px;
+}
+
+.update-btn {
+    background-color: var(--button-bg);
+}
+
+.update-btn:hover {
+    background-color: var(--button-hover);
 }
 
 button {
@@ -337,30 +357,10 @@ button:disabled {
     background-color: var(--delete-button-hover);
 }
 
-.update-btn {
-    padding: 4px 8px;
-    background-color: var(--accent-color);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.update-btn:hover {
-    opacity: 0.8;
-}
-
 .update-status {
     font-size: 0.8em;
     color: var(--text-color);
     margin-top: 4px;
-}
-
-.bulk-actions {
-    margin-bottom: 16px;
-    padding: 16px;
-    background-color: var(--container-bg);
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
 }
 
 .filter-container {
@@ -433,4 +433,11 @@ button:disabled {
 .error {
     background-color: var(--error-bg);
     color: var(--error-text);
+}
+
+.progress-text {
+    font-size: 14px;
+    color: var(--secondary-text);
+    text-align: center;
+    margin-top: 12px;
 }

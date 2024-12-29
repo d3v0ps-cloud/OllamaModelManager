@@ -38,7 +38,6 @@ app.post('/api/set-endpoint', async (req, res) => {
     }
 });
 
-// Get models from Ollama
 // Get running models from Ollama
 app.get('/api/ps', async (req, res) => {
     try {
@@ -125,18 +124,8 @@ app.delete('/api/models', async (req, res) => {
     }
 });
 
-// Endpoint to update a model
-app.post('/api/update-model', async (req, res) => {
-    const { modelName } = req.body;
-    
-    if (!modelName) {
-        return res.status(400).json({ 
-            success: false, 
-            message: 'Model name is required' 
-        });
-    }
-
-    // Set headers for streaming response
+// Handle streaming response for model operations
+const handleModelOperation = async (req, res, operation) => {
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Transfer-Encoding', 'chunked');
 
@@ -158,7 +147,7 @@ app.post('/api/update-model', async (req, res) => {
         const response = await axios({
             method: 'post',
             url: `${ollamaEndpoint}/api/pull`,
-            data: { model: modelName },
+            data: operation,
             responseType: 'stream'
         });
 
@@ -167,7 +156,6 @@ app.post('/api/update-model', async (req, res) => {
                 const lines = chunk.toString().split('\n');
                 lines.forEach(line => {
                     if (line.trim()) {
-                        // Validate JSON before sending
                         try {
                             JSON.parse(line);
                             res.write(line + '\n');
@@ -182,24 +170,42 @@ app.post('/api/update-model', async (req, res) => {
             }
         });
 
-        response.data.on('end', () => {
-            endResponse();
-        });
-
+        response.data.on('end', () => endResponse());
         response.data.on('error', (error) => {
             console.error('Stream error:', error);
             endResponse(error);
         });
 
-        // Handle client disconnect
-        req.on('close', () => {
-            endResponse();
-        });
+        req.on('close', () => endResponse());
 
     } catch (error) {
-        console.error('Failed to start update:', error);
+        console.error('Failed to start operation:', error);
         endResponse(error);
     }
+};
+
+// Endpoint to pull a model
+app.post('/api/pull', async (req, res) => {
+    const { model } = req.body;
+    if (!model) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Model name is required' 
+        });
+    }
+    await handleModelOperation(req, res, { model });
+});
+
+// Endpoint to update a model
+app.post('/api/update-model', async (req, res) => {
+    const { modelName } = req.body;
+    if (!modelName) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Model name is required' 
+        });
+    }
+    await handleModelOperation(req, res, { model: modelName });
 });
 
 const PORT = 3000;
