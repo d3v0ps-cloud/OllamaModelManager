@@ -17,6 +17,7 @@ A web-based management interface for Ollama endpoints, allowing you to manage an
 - Light & Dark Theme (defaults dark)
 - Update Models
 - Running Models Stats
+- Pull Models from Ollama Hub
 
 ## Prerequisites
 
