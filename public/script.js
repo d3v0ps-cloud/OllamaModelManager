@@ -1,5 +1,6 @@
 let selectedModels = new Set();
 
+/* eslint-disable no-unused-vars */
 function updateSelectedModels(checkbox) {
     if (checkbox.checked) {
         selectedModels.add(checkbox.value);
@@ -16,7 +17,7 @@ function updateBulkActionButtons() {
     }
 }
 
-async function updateSelectedModels() {
+async function updateSelectedModelsInBulk() {
     const models = Array.from(selectedModels);
     const updatePromises = models.map(modelName => updateModel(modelName));
     await Promise.all(updatePromises);
@@ -25,10 +26,11 @@ async function updateSelectedModels() {
 }
 
 function displayModels(models) {
+/* eslint-enable no-unused-vars */
     const container = document.getElementById('modelsListContent');
     container.innerHTML = `
         <div class="bulk-actions">
-            <button id="updateSelectedBtn" onclick="updateSelectedModels()" disabled>Update Selected Models</button>
+            <button id="updateSelectedBtn" onclick="updateSelectedModelsInBulk()" disabled>Update Selected Models</button>
         </div>
     `;
 
