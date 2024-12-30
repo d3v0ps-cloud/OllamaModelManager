@@ -1,0 +1,375 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Ollama Model Manager API",
+    "description": "REST API for managing Ollama models and endpoints",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Default server"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "description": "Human readable error message"
+          },
+          "error": {
+            "type": "string",
+            "description": "Detailed error information (optional)"
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ModelDetails": {
+        "type": "object",
+        "properties": {
+          "parent_model": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "family": {
+            "type": "string"
+          },
+          "families": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "parameter_size": {
+            "type": "string"
+          },
+          "quantization_level": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/endpoints": {
+      "get": {
+        "summary": "Get Available Ollama Endpoints",
+        "description": "Returns a list of configured Ollama endpoints",
+        "responses": {
+          "200": {
+            "description": "List of endpoints",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/set-endpoint": {
+      "post": {
+        "summary": "Set Active Ollama Endpoint",
+        "description": "Sets and validates the active Ollama endpoint",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "string",
+                    "example": "http://localhost:11434"
+                  }
+                },
+                "required": ["endpoint"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Endpoint set successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error setting endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ps": {
+      "get": {
+        "summary": "Get Running Models",
+        "description": "Returns a list of currently running Ollama models",
+        "responses": {
+          "200": {
+            "description": "List of running models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response format matches Ollama's /api/ps endpoint"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error fetching running models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/models": {
+      "get": {
+        "summary": "Get Available Models",
+        "description": "Returns a list of available models with their details",
+        "responses": {
+          "200": {
+            "description": "List of models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "size": {
+                        "type": "integer"
+                      },
+                      "details": {
+                        "$ref": "#/components/schemas/ModelDetails"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error fetching models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Models",
+        "description": "Deletes one or more models from Ollama",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "models": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": ["models"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Models deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error deleting models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pull": {
+      "post": {
+        "summary": "Pull Model",
+        "description": "Pulls a new model from Ollama. Returns a streaming response with progress updates",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "model": {
+                    "type": "string"
+                  }
+                },
+                "required": ["model"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Streaming response with progress updates",
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["downloading", "verifying digest", "writing manifest", "error"]
+                    },
+                    "completed": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/update-model": {
+      "post": {
+        "summary": "Update Model",
+        "description": "Updates an existing model. Returns a streaming response with progress updates",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "modelName": {
+                    "type": "string"
+                  }
+                },
+                "required": ["modelName"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Streaming response with progress updates",
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["downloading", "verifying digest", "writing manifest", "error"]
+                    },
+                    "completed": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

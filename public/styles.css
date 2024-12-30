@@ -387,12 +387,36 @@ button:disabled {
     color: var(--secondary-text);
 }
 
+.api-docs-link {
+    position: fixed;
+    top: 20px;
+    right: 80px;
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 8px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    background-color: var(--container-bg);
+    color: var(--text-color);
+    box-shadow: 0 4px 12px var(--shadow-color);
+    transition: all 0.3s ease;
+}
+
+.api-docs-link:hover {
+    transform: scale(1.05);
+    background-color: var(--container-bg);
+}
+
 .theme-toggle {
     position: fixed;
     top: 20px;
     right: 20px;
     padding: 10px;
-    border-radius: 50%;
+    border-radius: 8px;
     width: 44px;
     height: 44px;
     display: flex;
