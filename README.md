@@ -11,13 +11,14 @@ A web-based management interface for Ollama endpoints, allowing you to manage an
 - Web-based interface for model management
 - Support for both local and remote Ollama instances
 - Filter Models
-- Sort Models
+- Sort Models\
 - Select Multiple Models or All Models
 - Delete Selected Models
 - Light & Dark Theme (defaults dark)
 - Update Models
 - Running Models Stats
 - Pull Models from Ollama Hub
+- Swagger API Documentation
 
 ## Prerequisites
 
