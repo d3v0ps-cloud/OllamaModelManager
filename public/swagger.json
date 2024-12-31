@@ -7,8 +7,23 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000",
-      "description": "Default server"
+      "url": "{protocol}://{hostname}:{port}",
+      "description": "API Server",
+      "variables": {
+        "protocol": {
+          "enum": ["http", "https"],
+          "default": "http",
+          "description": "The protocol to use"
+        },
+        "hostname": {
+          "default": "localhost",
+          "description": "The host name or IP address"
+        },
+        "port": {
+          "default": "3000",
+          "description": "The port number"
+        }
+      }
     }
   ],
   "components": {
