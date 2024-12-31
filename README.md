@@ -19,6 +19,7 @@ A web-based management interface for Ollama endpoints, allowing you to manage an
 - Running Models Stats
 - Pull Models from Ollama Hub
 - Swagger API Documentation
+- [Unraid Deployment Guide (untested)](https://github.com/d3v0ps-cloud/OllamaModelManager/blob/main/docs/unraid.md)
 
 ## Prerequisites
 
