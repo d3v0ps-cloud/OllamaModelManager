@@ -34,6 +34,9 @@ A web-based management interface for Ollama endpoints, allowing you to manage an
 1. Clone the repository:
 ```bash
 git clone https://github.com/d3v0ps-cloud/OllamaModelManager.git
+```
+
+```bash
 cd OllamaModelManager
 ```
 
@@ -68,6 +71,9 @@ The application will be available at `http://localhost:3000`
 1. Clone the repository:
 ```bash
 git clone https://github.com/d3v0ps-cloud/OllamaModelManager.git
+```
+
+```bash
 cd OllamaModelManager
 ```
 
