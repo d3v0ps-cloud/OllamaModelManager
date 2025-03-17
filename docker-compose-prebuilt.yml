@@ -1,6 +1,7 @@
 services:
   ollamamodelmanager:
-    image: ghcr.io/d3v0ps-cloud/ollamamodelmanager:latest
+    #image: ghcr.io/d3v0ps-cloud/ollamamodelmanager:latest
+    image: aaronbolton78/ollamamodelmanager:latest
     ports:
       - "3000:3000"
     environment:
