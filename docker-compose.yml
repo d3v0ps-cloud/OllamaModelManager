@@ -1,6 +1,11 @@
 services:
   ollamamodelmanager:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # image: ollamamodelmanager:latest
+    container_name: ollamamodelmanager
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
