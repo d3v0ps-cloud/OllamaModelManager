@@ -137,14 +137,9 @@ h2 {
 }
 
 .unload-btn {
-    background-color: var(--delete-button-bg);
     padding: 6px 12px;
     font-size: 13px;
     margin: 0;
-}
-
-.unload-btn:hover {
-    background-color: var(--delete-button-hover);
 }
 
 .unload-btn-sm {

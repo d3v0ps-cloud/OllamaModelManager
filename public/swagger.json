@@ -390,7 +390,7 @@
     "/api/unload": {
       "post": {
         "summary": "Unload Model",
-        "description": "Evicts a running model from VRAM by issuing keep_alive=0 to Ollama's /api/generate endpoint. Operates on the currently active endpoint.",
+        "description": "Evicts a running model from VRAM. Operates on the currently active endpoint.",
         "requestBody": {
           "required": true,
           "content": {

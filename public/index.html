@@ -30,7 +30,7 @@
                 <div class="running-models-stats">
                     <div class="running-models-header">
                         <h3>Running Models</h3>
-                        <button id="unloadAllBtn" class="unload-btn" onclick="unloadAllModels()" disabled>Unload All</button>
+                        <button id="unloadAllBtn" class="delete-btn unload-btn" onclick="unloadAllModels()" disabled>Unload All</button>
                     </div>
                     <div id="runningModelsContent"></div>
                 </div>
@@ -474,26 +474,22 @@
             }
         }
 
-        function setUnloadAllDisabled(disabled) {
-            const btn = document.getElementById('unloadAllBtn');
-            if (btn) btn.disabled = disabled;
-        }
-
         async function fetchRunningModels() {
             const runningModelsContent = document.getElementById('runningModelsContent');
+            const unloadAllBtn = document.getElementById('unloadAllBtn');
             try {
                 const response = await fetch('/api/ps');
                 const data = await response.json();
 
                 if (!data.models || data.models.length === 0) {
                     currentRunningModels = [];
-                    setUnloadAllDisabled(true);
+                    unloadAllBtn.disabled = true;
                     runningModelsContent.innerHTML = '<div class="running-model-item">No models currently running</div>';
                     return;
                 }
 
                 currentRunningModels = data.models.map(m => m.name);
-                setUnloadAllDisabled(false);
+                unloadAllBtn.disabled = false;
 
                 runningModelsContent.innerHTML = data.models.map(model => `
                     <div class="running-model-item">
@@ -521,18 +517,18 @@
                             <span class="stat-label">TTL:</span>
                             <span class="stat-value">${formatTtl(model.expires_at)}</span>
                         </div>
-                        <button class="unload-btn unload-btn-sm" onclick="unloadModel('${model.name}')">Unload</button>
+                        <button class="delete-btn unload-btn-sm" onclick="unloadModel('${model.name}')">Unload</button>
                     </div>
                 `).join('');
             } catch (error) {
                 console.error('Failed to fetch running models:', error);
                 currentRunningModels = [];
-                setUnloadAllDisabled(true);
+                unloadAllBtn.disabled = true;
                 runningModelsContent.innerHTML = '<div class="running-model-item error">Failed to fetch running models</div>';
             }
         }
 
-        async function unloadModel(modelName, refresh = true) {
+        async function postUnload(modelName) {
             try {
                 const response = await fetch('/api/unload', {
                     method: 'POST',
@@ -540,23 +536,28 @@
                     body: JSON.stringify({ model: modelName })
                 });
                 const data = await response.json();
-                if (!data.success) {
-                    throw new Error(data.message || 'Unload failed');
-                }
-                if (refresh) fetchRunningModels();
+                if (!data.success) throw new Error(data.message || 'Unload failed');
                 return { ok: true };
             } catch (error) {
                 console.error(`Unload ${modelName} failed:`, error);
-                if (refresh) alert(`Failed to unload ${modelName}: ${error.message}`);
                 return { ok: false, error: error.message };
+            }
+        }
+
+        async function unloadModel(modelName) {
+            const result = await postUnload(modelName);
+            if (result.ok) {
+                fetchRunningModels();
+            } else {
+                alert(`Failed to unload ${modelName}: ${result.error}`);
             }
         }
 
         async function unloadAllModels() {
             if (currentRunningModels.length === 0) return;
             const names = [...currentRunningModels];
-            setUnloadAllDisabled(true);
-            const results = await Promise.all(names.map(name => unloadModel(name, false)));
+            document.getElementById('unloadAllBtn').disabled = true;
+            const results = await Promise.all(names.map(postUnload));
             fetchRunningModels();
             const failed = results.filter(r => !r.ok);
             if (failed.length) {

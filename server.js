@@ -74,7 +74,7 @@ app.get('/api/ps', async (req, res) => {
     }
 });
 
-// Unload a model from VRAM (sends keep_alive=0 to Ollama)
+// Unload a model from VRAM
 app.post('/api/unload', async (req, res) => {
     const { model } = req.body;
     if (!model) {
