@@ -28,7 +28,10 @@
                     <div id="endpointStatus"></div>
                 </div>
                 <div class="running-models-stats">
-                    <h3>Running Models</h3>
+                    <div class="running-models-header">
+                        <h3>Running Models</h3>
+                        <button id="unloadAllBtn" class="unload-btn" onclick="unloadAllModels()" disabled>Unload All</button>
+                    </div>
                     <div id="runningModelsContent"></div>
                 </div>
             </div>
@@ -69,6 +72,7 @@
     <script>
         let selectedModels = new Set();
         let currentModels = [];
+        let currentRunningModels = [];
         let currentSort = { field: 'name', direction: 'asc' };
 
         // Theme handling
@@ -109,6 +113,20 @@
                 const select = document.getElementById('endpointInput');
                 select.innerHTML = '<option value="">Failed to load endpoints</option>';
             }
+        }
+
+        function formatTtl(expiresAt) {
+            if (!expiresAt) return 'N/A';
+            const remainingMs = new Date(expiresAt).getTime() - Date.now();
+            if (isNaN(remainingMs)) return 'N/A';
+            if (remainingMs <= 0) return 'expired';
+            const totalSeconds = Math.floor(remainingMs / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            if (minutes > 0) return `${minutes}m ${seconds}s`;
+            return `${seconds}s`;
         }
 
         function formatSize(bytes) {
@@ -456,16 +474,26 @@
             }
         }
 
+        function setUnloadAllDisabled(disabled) {
+            const btn = document.getElementById('unloadAllBtn');
+            if (btn) btn.disabled = disabled;
+        }
+
         async function fetchRunningModels() {
             const runningModelsContent = document.getElementById('runningModelsContent');
             try {
                 const response = await fetch('/api/ps');
                 const data = await response.json();
-                
+
                 if (!data.models || data.models.length === 0) {
+                    currentRunningModels = [];
+                    setUnloadAllDisabled(true);
                     runningModelsContent.innerHTML = '<div class="running-model-item">No models currently running</div>';
                     return;
                 }
+
+                currentRunningModels = data.models.map(m => m.name);
+                setUnloadAllDisabled(false);
 
                 runningModelsContent.innerHTML = data.models.map(model => `
                     <div class="running-model-item">
@@ -489,11 +517,50 @@
                             <span class="stat-label">Quantization:</span>
                             <span class="stat-value">${model.details?.quantization_level || 'N/A'}</span>
                         </div>
+                        <div class="model-stat">
+                            <span class="stat-label">TTL:</span>
+                            <span class="stat-value">${formatTtl(model.expires_at)}</span>
+                        </div>
+                        <button class="unload-btn unload-btn-sm" onclick="unloadModel('${model.name}')">Unload</button>
                     </div>
                 `).join('');
             } catch (error) {
                 console.error('Failed to fetch running models:', error);
+                currentRunningModels = [];
+                setUnloadAllDisabled(true);
                 runningModelsContent.innerHTML = '<div class="running-model-item error">Failed to fetch running models</div>';
+            }
+        }
+
+        async function unloadModel(modelName, refresh = true) {
+            try {
+                const response = await fetch('/api/unload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: modelName })
+                });
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.message || 'Unload failed');
+                }
+                if (refresh) fetchRunningModels();
+                return { ok: true };
+            } catch (error) {
+                console.error(`Unload ${modelName} failed:`, error);
+                if (refresh) alert(`Failed to unload ${modelName}: ${error.message}`);
+                return { ok: false, error: error.message };
+            }
+        }
+
+        async function unloadAllModels() {
+            if (currentRunningModels.length === 0) return;
+            const names = [...currentRunningModels];
+            setUnloadAllDisabled(true);
+            const results = await Promise.all(names.map(name => unloadModel(name, false)));
+            fetchRunningModels();
+            const failed = results.filter(r => !r.ok);
+            if (failed.length) {
+                alert(`Failed to unload ${failed.length} of ${names.length} model(s)`);
             }
         }
 

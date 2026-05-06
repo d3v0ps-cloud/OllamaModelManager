@@ -125,6 +125,35 @@ h2 {
     color: var(--text-color);
 }
 
+.running-models-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.running-models-header h3 {
+    margin: 0;
+}
+
+.unload-btn {
+    background-color: var(--delete-button-bg);
+    padding: 6px 12px;
+    font-size: 13px;
+    margin: 0;
+}
+
+.unload-btn:hover {
+    background-color: var(--delete-button-hover);
+}
+
+.unload-btn-sm {
+    display: block;
+    margin: 8px 0 0 auto;
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
 .running-model-item {
     padding: 12px;
     border: 1px solid var(--border-color);
