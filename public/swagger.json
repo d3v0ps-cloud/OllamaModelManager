@@ -386,6 +386,61 @@
           }
         }
       }
+    },
+    "/api/unload": {
+      "post": {
+        "summary": "Unload Model",
+        "description": "Evicts a running model from VRAM by issuing keep_alive=0 to Ollama's /api/generate endpoint. Operates on the currently active endpoint.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "example": "llama3:8b"
+                  }
+                },
+                "required": ["model"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Model unloaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request - model name missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error unloading model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

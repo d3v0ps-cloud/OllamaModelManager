@@ -66,10 +66,34 @@ app.get('/api/ps', async (req, res) => {
         const response = await axios.get(`${ollamaEndpoint}/api/ps`);
         res.json(response.data);
     } catch (error) {
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Failed to fetch running models',
-            error: error.message 
+            error: error.message
+        });
+    }
+});
+
+// Unload a model from VRAM (sends keep_alive=0 to Ollama)
+app.post('/api/unload', async (req, res) => {
+    const { model } = req.body;
+    if (!model) {
+        return res.status(400).json({
+            success: false,
+            message: 'Model name is required'
+        });
+    }
+    try {
+        await axios.post(`${ollamaEndpoint}/api/generate`, {
+            model,
+            keep_alive: 0
+        });
+        res.json({ success: true, message: 'Model unloaded successfully' });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to unload model',
+            error: error.message
         });
     }
 });
